@@ -14,7 +14,6 @@ export type LocalGuardian = {
   name: string;
   occupation: string;
   contuctNo: string;
-  address: string;
 };
 
 export type Student = {
