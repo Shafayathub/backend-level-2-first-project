@@ -42,6 +42,7 @@ const LocalGuardianValidationSchema = z.object({
 // Define the main Student schema
 export const StudentValidationSchema = z.object({
   id: z.string().min(1, { message: 'Student ID is required' }),
+  password: z.string().min(6),
   name: UserNameValidationSchema.refine(
     (value) =>
       value.firstName ===
