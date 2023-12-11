@@ -67,67 +67,83 @@ const localGuardianSchema = new Schema<LocalGuardian>({
   },
 });
 
-const studentSchema = new Schema<Student>({
-  id: {
-    type: String,
-    required: [true, 'Student ID is required'],
-    unique: true,
+const studentSchema = new Schema<Student>(
+  {
+    id: {
+      type: String,
+      required: [true, 'Student ID is required'],
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: [true, 'password is required'],
+      minlength: [6, 'Password must be at least 6 character.'],
+    },
+    name: {
+      type: userNameSchema,
+      required: [true, 'Student name is required'],
+    },
+    gender: {
+      type: String,
+      enum: ['male', 'female'],
+      required: [true, 'Gender is required'],
+    },
+    birthday: String,
+    email: {
+      type: String,
+      required: [true, 'Email is required'],
+      unique: true,
+      validate: { validator: (value: string) => validator.isEmail(value) },
+    },
+    contuctNo: {
+      type: String,
+      required: [true, 'Contact number is required'],
+    },
+    emergencyContuctNo: {
+      type: String,
+      required: [true, 'Emergency contact number is required'],
+    },
+    bloodGroup: {
+      type: String,
+      enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'],
+    },
+    presentAddress: {
+      type: String,
+      required: [true, 'Present address is required'],
+    },
+    permanentAddress: {
+      type: String,
+      required: [true, 'Permanent address is required'],
+    },
+    guardian: {
+      type: guardianSchema,
+      required: [true, 'Guardian information is required'],
+    },
+    localGuardian: {
+      type: localGuardianSchema,
+      required: [true, 'Local guardian information is required'],
+    },
+    profileImg: String,
+    isActive: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
-  password: {
-    type: String,
-    required: [true, 'password is required'],
-    minlength: [6, 'Password must be at least 6 character.'],
+  {
+    toJSON: {
+      virtuals: true,
+    },
   },
-  name: {
-    type: userNameSchema,
-    required: [true, 'Student name is required'],
-  },
-  gender: {
-    type: String,
-    enum: ['male', 'female'],
-    required: [true, 'Gender is required'],
-  },
-  birthday: String,
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    validate: { validator: (value: string) => validator.isEmail(value) },
-  },
-  contuctNo: {
-    type: String,
-    required: [true, 'Contact number is required'],
-  },
-  emergencyContuctNo: {
-    type: String,
-    required: [true, 'Emergency contact number is required'],
-  },
-  bloodGroup: {
-    type: String,
-    enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'],
-  },
-  presentAddress: {
-    type: String,
-    required: [true, 'Present address is required'],
-  },
-  permanentAddress: {
-    type: String,
-    required: [true, 'Permanent address is required'],
-  },
-  guardian: {
-    type: guardianSchema,
-    required: [true, 'Guardian information is required'],
-  },
-  localGuardian: {
-    type: localGuardianSchema,
-    required: [true, 'Local guardian information is required'],
-  },
-  profileImg: String,
-  isActive: {
-    type: String,
-    enum: ['active', 'inactive'],
-    default: 'active',
-  },
+);
+
+// virtual
+studentSchema.virtual('fullname').get(function () {
+  return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`;
 });
 
 // pre middleware hook
@@ -146,5 +162,20 @@ studentSchema.post('save', function (doc, next) {
 });
 
 // Query middleware
+studentSchema.pre('find', function (next) {
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
+
+studentSchema.pre('findOne', function (next) {
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
+
+studentSchema.pre('aggregate', function (next) {
+  // [{ $match: { isDeleted: { $ne: true } } }, {$match: {id:{$eq:id}}}]
+  this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } });
+  next();
+});
 
 export const StudentModel = model<Student>('Student', studentSchema);
