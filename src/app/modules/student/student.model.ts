@@ -3,14 +3,14 @@ import validator from 'validator';
 import bcrypt from 'bcrypt';
 
 import {
-  Guardian,
-  LocalGuardian,
-  Student,
-  UserName,
-} from './student/student.interface';
-import config from '../config';
+  TGuardian,
+  TLocalGuardian,
+  TStudent,
+  TUserName,
+} from './student.interface';
+import config from '../../config';
 
-const userNameSchema = new Schema<UserName>({
+const userNameSchema = new Schema<TUserName>({
   firstName: {
     type: String,
     required: [true, 'First name is required'],
@@ -37,7 +37,7 @@ const userNameSchema = new Schema<UserName>({
   },
 });
 
-const guardianSchema = new Schema<Guardian>({
+const guardianSchema = new Schema<TGuardian>({
   fatherName: {
     type: String,
     required: [true, 'Father name is required'],
@@ -52,7 +52,7 @@ const guardianSchema = new Schema<Guardian>({
   },
 });
 
-const localGuardianSchema = new Schema<LocalGuardian>({
+const localGuardianSchema = new Schema<TLocalGuardian>({
   name: {
     type: String,
     required: [true, 'Local guardian name is required'],
@@ -67,12 +67,18 @@ const localGuardianSchema = new Schema<LocalGuardian>({
   },
 });
 
-const studentSchema = new Schema<Student>(
+const studentSchema = new Schema<TStudent>(
   {
     id: {
       type: String,
       required: [true, 'Student ID is required'],
       unique: true,
+    },
+    user: {
+      type: Schema.Types.ObjectId,
+      required: [true, 'Student ID is required'],
+      unique: true,
+      ref: 'User',
     },
     password: {
       type: String,
@@ -124,11 +130,6 @@ const studentSchema = new Schema<Student>(
       required: [true, 'Local guardian information is required'],
     },
     profileImg: String,
-    isActive: {
-      type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
-    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -156,6 +157,7 @@ studentSchema.pre('save', async function () {
     Number(config.bcrypt_salt_rounds),
   );
 });
+
 studentSchema.post('save', function (doc, next) {
   doc.password = '';
   next();
@@ -178,4 +180,4 @@ studentSchema.pre('aggregate', function (next) {
   next();
 });
 
-export const StudentModel = model<Student>('Student', studentSchema);
+export const StudentModel = model<TStudent>('Student', studentSchema);
