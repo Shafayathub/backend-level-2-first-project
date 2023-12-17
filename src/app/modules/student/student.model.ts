@@ -87,7 +87,7 @@ const studentSchema = new Schema<TStudent>(
       enum: ['male', 'female'],
       required: [true, 'Gender is required'],
     },
-    birthday: String,
+    birthday: { type: String },
     email: {
       type: String,
       required: [true, 'Email is required'],
@@ -122,7 +122,8 @@ const studentSchema = new Schema<TStudent>(
       type: localGuardianSchema,
       required: [true, 'Local guardian information is required'],
     },
-    profileImg: String,
+    profileImg: { type: String },
+    admissionSemester: { type: Schema.Types.ObjectId, ref: 'AcademicSemester' },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -132,6 +133,7 @@ const studentSchema = new Schema<TStudent>(
     toJSON: {
       virtuals: true,
     },
+    timestamps: true,
   },
 );
 

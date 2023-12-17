@@ -40,36 +40,45 @@ const LocalGuardianValidationSchema = z.object({
 });
 
 // Define the main Student schema
-export const StudentValidationSchema = z.object({
-  id: z.string().min(1, { message: 'Student ID is required' }),
-  password: z.string().min(6),
-  name: UserNameValidationSchema.refine(
-    (value) =>
-      value.firstName ===
-      value.firstName.charAt(0).toUpperCase() + value.firstName.slice(1),
-    {
-      message: 'First name in the Student name must be in capitalized format',
-    },
-  ),
-  gender: z.enum(['male', 'female']),
-  birthday: z.string().optional(),
-  email: z
-    .string()
-    .email({ message: 'Email is required and must be a valid email address' }),
-  contuctNo: z.string().min(1, { message: 'Contact number is required' }),
-  emergencyContuctNo: z
-    .string()
-    .min(1, { message: 'Emergency contact number is required' }),
-  bloodGroup: z
-    .enum(['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
-    .optional(),
-  presentAddress: z.string().min(1, { message: 'Present address is required' }),
-  permanentAddress: z
-    .string()
-    .min(1, { message: 'Permanent address is required' }),
-  guardian: GuardianValidationSchema,
-  localGuardian: LocalGuardianValidationSchema,
-  profileImg: z.string().optional(),
-  isActive: z.enum(['active', 'inactive']).default('active'),
-  isDeleted: z.boolean(),
+const CreateStudentValidationSchema = z.object({
+  body: z.object({
+    password: z.string().min(6),
+    student: z.object({
+      name: UserNameValidationSchema.refine(
+        (value) =>
+          value.firstName ===
+          value.firstName.charAt(0).toUpperCase() + value.firstName.slice(1),
+        {
+          message:
+            'First name in the Student name must be in capitalized format',
+        },
+      ),
+      gender: z.enum(['male', 'female']),
+      birthday: z.string().optional(),
+      email: z.string().email({
+        message: 'Email is required and must be a valid email address',
+      }),
+      contuctNo: z.string().min(1, { message: 'Contact number is required' }),
+      emergencyContuctNo: z
+        .string()
+        .min(1, { message: 'Emergency contact number is required' }),
+      bloodGroup: z
+        .enum(['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
+        .optional(),
+      presentAddress: z
+        .string()
+        .min(1, { message: 'Present address is required' }),
+      permanentAddress: z
+        .string()
+        .min(1, { message: 'Permanent address is required' }),
+      guardian: GuardianValidationSchema,
+      localGuardian: LocalGuardianValidationSchema,
+      admissionSemester: z.string(),
+      profileImg: z.string().optional(),
+    }),
+  }),
 });
+
+export const StudentValidations = {
+  CreateStudentValidationSchema,
+};
