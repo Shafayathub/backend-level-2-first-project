@@ -1,6 +1,5 @@
 import { Schema, model } from 'mongoose';
 import validator from 'validator';
-import bcrypt from 'bcrypt';
 
 import {
   TGuardian,
@@ -8,7 +7,6 @@ import {
   TStudent,
   TUserName,
 } from './student.interface';
-import config from '../../config';
 
 const userNameSchema = new Schema<TUserName>({
   firstName: {
@@ -80,11 +78,6 @@ const studentSchema = new Schema<TStudent>(
       unique: true,
       ref: 'User',
     },
-    password: {
-      type: String,
-      required: [true, 'password is required'],
-      minlength: [6, 'Password must be at least 6 character.'],
-    },
     name: {
       type: userNameSchema,
       required: [true, 'Student name is required'],
@@ -145,22 +138,6 @@ const studentSchema = new Schema<TStudent>(
 // virtual
 studentSchema.virtual('fullname').get(function () {
   return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`;
-});
-
-// pre middleware hook
-studentSchema.pre('save', async function () {
-  // console.log(this, 'pre hook: we will save data.');
-
-  // hashing password and save into db
-  this.password = await bcrypt.hash(
-    this.password,
-    Number(config.bcrypt_salt_rounds),
-  );
-});
-
-studentSchema.post('save', function (doc, next) {
-  doc.password = '';
-  next();
 });
 
 // Query middleware
