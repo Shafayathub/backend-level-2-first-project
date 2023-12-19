@@ -2,6 +2,7 @@ import { Schema, model } from 'mongoose';
 import validator from 'validator';
 
 import {
+  StudentModel,
   TGuardian,
   TLocalGuardian,
   TStudent,
@@ -65,7 +66,7 @@ const localGuardianSchema = new Schema<TLocalGuardian>({
   },
 });
 
-const studentSchema = new Schema<TStudent>(
+const studentSchema = new Schema<TStudent, StudentModel>(
   {
     id: {
       type: String,
@@ -163,4 +164,10 @@ studentSchema.pre('aggregate', function (next) {
   next();
 });
 
-export const StudentModel = model<TStudent>('Student', studentSchema);
+//creating a custom static method
+studentSchema.statics.isUserExists = async function (id: string) {
+  const existingUser = await Student.findOne({ id });
+  return existingUser;
+};
+
+export const Student = model<TStudent, StudentModel>('Student', studentSchema);

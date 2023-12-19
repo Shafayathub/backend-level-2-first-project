@@ -1,7 +1,11 @@
-import { StudentModel } from './student.model';
+import mongoose from 'mongoose';
+import { Student } from './student.model';
+import AppError from '../../errors/appError';
+import httpStatus from 'http-status';
+import { User } from '../user/user.model';
 
 const getAllStudentsFromDB = async () => {
-  const result = await StudentModel.find()
+  const result = await Student.find()
     .populate('admissionSemester')
     .populate({
       path: 'academicDepartment',
@@ -13,7 +17,7 @@ const getAllStudentsFromDB = async () => {
 };
 
 const getSingleStudentFromDB = async (id: string) => {
-  const result = await StudentModel.findOne({ id })
+  const result = await Student.findOne({ id })
     .populate('admissionSemester')
     .populate({
       path: 'academicDepartment',
@@ -24,8 +28,43 @@ const getSingleStudentFromDB = async (id: string) => {
   return result;
 };
 const deleteStudentFromDB = async (id: string) => {
-  const result = await StudentModel.updateOne({ id }, { isDeleted: true });
-  return result;
+  const isStudentExists = await Student.isUserExists(id);
+  if (!isStudentExists) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Student bairer vai ekhankar na!',
+    );
+  }
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+    const deletedStudent = await Student.findOneAndUpdate(
+      { id },
+      { isDeleted: true },
+      { new: true, session },
+    );
+    if (!deletedStudent) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to delete student!');
+    }
+    const deletedUser = await User.findOneAndUpdate(
+      { id },
+      { isDeleted: true },
+      { new: true, session },
+    );
+
+    if (!deletedUser) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to delete user!');
+    }
+
+    await session.commitTransaction();
+    await session.endSession();
+
+    return deletedStudent;
+  } catch (err) {
+    await session.abortTransaction();
+    await session.endSession();
+  }
 };
 
 export const StudentServices = {

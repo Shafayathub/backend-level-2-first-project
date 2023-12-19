@@ -3,7 +3,7 @@ import config from '../../config';
 import { TAcademicSemester } from '../academicSemester/academicSemester.interface';
 import { AcademicSemester } from '../academicSemester/academicSemester.model';
 import { TStudent } from '../student/student.interface';
-import { StudentModel } from '../student/student.model';
+import { Student } from '../student/student.model';
 import { TUser } from './user.interface';
 import { User } from './user.model';
 import { generateStudentId } from './user.utils';
@@ -41,7 +41,7 @@ const createStudentIntoDB = async (password: string, payload: TStudent) => {
     payload.user = newUser[0]._id; //reference_id
 
     // create a student (transection-2)
-    const newStudent = await StudentModel.create([payload], { session });
+    const newStudent = await Student.create([payload], { session });
     if (!newStudent) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
