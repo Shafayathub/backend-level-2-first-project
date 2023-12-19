@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import config from '../../config';
 import { TAcademicSemester } from '../academicSemester/academicSemester.interface';
 import { AcademicSemester } from '../academicSemester/academicSemester.model';
@@ -6,6 +7,8 @@ import { StudentModel } from '../student/student.model';
 import { TUser } from './user.interface';
 import { User } from './user.model';
 import { generateStudentId } from './user.utils';
+import AppError from '../../errors/appError';
+import httpStatus from 'http-status';
 
 const createStudentIntoDB = async (password: string, payload: TStudent) => {
   const user: Partial<TUser> = {};
@@ -20,19 +23,40 @@ const createStudentIntoDB = async (password: string, payload: TStudent) => {
     payload.admissionSemester,
   );
 
-  //  generated id
-  user.id = await generateStudentId(admissionSemester as TAcademicSemester);
+  const session = await mongoose.startSession();
 
-  // create a user
-  const newUser = await User.create(user);
+  try {
+    session.startTransaction();
+    //  generated id
+    user.id = await generateStudentId(admissionSemester as TAcademicSemester);
 
-  //  create a student
-  if (Object.keys(newUser).length) {
-    payload.id = newUser.id;
-    payload.user = newUser._id; //reference_id
+    // create a user (transection-1)
+    const newUser = await User.create([user], { session });
 
-    const newStudent = await StudentModel.create(payload);
+    //  create a student
+    if (!newUser.length) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create an user!');
+    }
+    payload.id = newUser[0].id;
+    payload.user = newUser[0]._id; //reference_id
+
+    // create a student (transection-2)
+    const newStudent = await StudentModel.create([payload], { session });
+    if (!newStudent) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Failed to create an student!',
+      );
+    }
+
+    await session.commitTransaction();
+
+    await session.endSession();
+
     return newStudent;
+  } catch (err) {
+    await session.abortTransaction();
+    await session.endSession();
   }
 };
 
