@@ -4,55 +4,37 @@ import AppError from '../../errors/appError';
 import httpStatus from 'http-status';
 import { User } from '../user/user.model';
 import { TStudent } from './student.interface';
+import QueryBuilder from '../../builder/QueryBuilder';
+import { searchableFields } from './student.const';
 
 const getAllStudentsFromDB = async (query: Record<string, unknown>) => {
   // {email: {$regex: query.serchTerm, $option: i}}
   // {name.firstName: {$regex: query.serchTerm, $option: i}}
-  const queryObj = { ...query };
-  const searchableFields = ['email', 'name.firstName', 'presentAddress'];
-  let searchTerm = '';
+  // const queryObj = { ...query };
+  // const searchableFields = ['email', 'name.firstName', 'presentAddress'];
+  // let searchTerm = '';
 
-  if (query?.serchTerm) {
-    searchTerm = query.serchTerm as string;
-  }
+  // if (query?.serchTerm) {
+  //   searchTerm = query.serchTerm as string;
+  // }
 
-  const searchQuery = Student.find({
-    $or: searchableFields.map((field) => ({
-      [field]: { $regex: searchTerm, $options: 'i' },
-    })),
-  });
+  // const searchQuery = Student.find({
+  //   $or: searchableFields.map((field) => ({
+  //     [field]: { $regex: searchTerm, $options: 'i' },
+  //   })),
+  // });
 
   // filtering
-  const excludeFields = ['searchTerm', 'sort', 'limit'];
 
-  excludeFields.forEach((e) => delete queryObj[e]);
+  const studentQuery = new QueryBuilder(Student.find(), query)
+    .search(searchableFields)
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
 
-  const filterQuery = searchQuery
-    .find(queryObj)
-    .populate('admissionSemester')
-    .populate({
-      path: 'academicDepartment',
-      populate: {
-        path: 'academicFaculty',
-      },
-    });
-
-  let sort = '-createdAt';
-
-  if (query.sort) {
-    sort = query.sort as string;
-  }
-
-  const sortQuery = filterQuery.sort(sort);
-
-  let limit = 1;
-  if (query.limit) {
-    limit = query.limit as number;
-  }
-
-  const limitQuery = sortQuery.limit(limit);
-
-  return limitQuery;
+  const result = await studentQuery.modelQuery;
+  return result;
 };
 
 const getSingleStudentFromDB = async (id: string) => {
