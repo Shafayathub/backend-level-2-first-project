@@ -4,8 +4,8 @@ import AppError from '../../errors/appError';
 import httpStatus from 'http-status';
 import { User } from '../user/user.model';
 import { TStudent } from './student.interface';
-import QueryBuilder from '../../builder/QueryBuilder';
 import { searchableFields } from './student.const';
+import QueryBuilder from '../../builder/QueryBuilder';
 
 const getAllStudentsFromDB = async (query: Record<string, unknown>) => {
   // {email: {$regex: query.serchTerm, $option: i}}
@@ -14,19 +14,21 @@ const getAllStudentsFromDB = async (query: Record<string, unknown>) => {
   // const searchableFields = ['email', 'name.firstName', 'presentAddress'];
   // let searchTerm = '';
 
-  // if (query?.serchTerm) {
-  //   searchTerm = query.serchTerm as string;
-  // }
+  // let sort = '-createdAt';
 
-  // const searchQuery = Student.find({
-  //   $or: searchableFields.map((field) => ({
-  //     [field]: { $regex: searchTerm, $options: 'i' },
-  //   })),
-  // });
+  // let fields = '-__v';
 
-  // filtering
-
-  const studentQuery = new QueryBuilder(Student.find(), query)
+  const studentQuery = new QueryBuilder(
+    Student.find()
+      .populate('admissionSemester')
+      .populate({
+        path: 'academicDepartment',
+        populate: {
+          path: 'academicFaculty',
+        },
+      }),
+    query,
+  )
     .search(searchableFields)
     .filter()
     .sort()
