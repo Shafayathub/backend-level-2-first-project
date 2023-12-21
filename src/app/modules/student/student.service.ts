@@ -47,7 +47,7 @@ const getAllStudentsFromDB = async (query: Record<string, unknown>) => {
 
   let limit = 1;
   if (query.limit) {
-    limit = query.limit;
+    limit = query.limit as number;
   }
 
   const limitQuery = sortQuery.limit(limit);
